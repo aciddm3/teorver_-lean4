@@ -1,0 +1,14 @@
+name = "teorver"
+version = "0.1.0"
+defaultTargets = ["teorver"]
+
+[[lean_lib]]
+name = "Teorver"
+
+[[lean_exe]]
+name = "teorver"
+root = "Main"
+
+[[require]]
+name = "mathlib"
+scope = "leanprover-community"
