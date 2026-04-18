@@ -1,7 +1,3 @@
--- import Mathlib.Analysis.SeqLimit
-  -- пределы последовательностей, limsup, liminf
--- import Mathlib.Algebra.BigOperators.Group.Finset
-  -- ∑ s, f, свойства сумм
 import Mathlib.Data.Real.Basic
   -- ℝ, ≤, <, |·|, sup, inf, арифметика, exp, log
 import Mathlib.Data.Fintype.Basic
@@ -22,10 +18,10 @@ import Teorver.SigmaAlgebra
 
 structure ProbSpace (Ω : Type*) where
   F : SigmaAlgebra Ω
-  p : Set Ω → Real                      -- 1. Определяем на всех подмножествах
+  p : Set Ω -> Real                      -- 1. Определяем на всех подмножествах
   p_nonneg : ∀ s ∈ F.sets, 0 ≤ p s      -- 2. Неотрицательность
   p_univ : p Set.univ = 1               -- 3. Нормировка на полном множестве
-  p_add : ∀ (f : Nat → Set Ω),          -- 4. σ-аддитивность
+  p_add : ∀ (f : Nat -> Set Ω),          -- 4. σ-аддитивность
     (∀ n, f n ∈ F.sets) ->
     (∀ i j, i ≠ j -> Disjoint (f i) (f j)) ->
     p (⋃ n, f n) = ∑' n, p (f n)
@@ -133,7 +129,7 @@ theorem prob_mono {α : Type*} (P : ProbSpace α) {A B : Set α}
     have h_diff : B \ A ∈ P.F.sets := by
       rw [Set.diff_eq]
       exact
-        SigmaAlgebra.intersect2_mem P.F hB
+        SigmaAlgebra.inter2_mem P.F hB
         (SigmaAlgebra.compl_mem P.F A hA)
 
     have disj : Disjoint A (B \ A) := by
@@ -151,3 +147,34 @@ theorem prob_max {α : Type*} {P : ProbSpace α} {A : Set α}
   (hA : A ∈ P.F.sets) : P.p A ≤ 1 := by
   rw [<- P.p_univ]
   apply prob_mono P hA P.F.univ_mem (Set.subset_univ A)
+
+theorem prob_add {α : Type*} (P : ProbSpace α) {A B : Set α}
+    (hA : A ∈ P.F.sets) (hB : B ∈ P.F.sets)
+    : P.p (A ∪ B) = P.p A + P.p B - P.p (A ∩ B) := by
+    have sAiB : P.p (A ∪ B) = P.p A + P.p (Aᶜ ∩ B) := by
+      have hav1 : A ∪ B = A ∪ (Aᶜ ∩ B) := by
+        simp [Set.union_inter_distrib_left]
+      rw [hav1]
+      have disj : Disjoint A (Aᶜ ∩ B) := by
+        rw[<- Set.diff_eq_compl_inter]
+        apply disjoint_sdiff_self_right
+      rw [p_add2 P hA]
+      apply P.F.inter2_mem (P.F.compl_mem A hA) hB
+      apply disj
+    have sB : P.p B = P.p (Aᶜ ∩ B) + P.p (A ∩ B) := by
+      have hav1 : B = Aᶜ ∩ B ∪ A ∩ B := by
+        simp [<- Set.union_inter_distrib_right]
+      have disj : Disjoint (Aᶜ ∩ B) (A ∩ B) := by
+        rw [Set.disjoint_iff_inter_eq_empty]
+        simp [<- Set.inter_inter_distrib_right]
+      rw [<- p_add2 P (P.F.inter2_mem (P.F.compl_mem A hA) hB)
+        (P.F.inter2_mem hA hB) disj]
+      simp [<- Set.union_inter_distrib_right]
+    apply_fun (· - P.p (A ∩ B) ) at sB
+    simp at sB
+    rw [<-sB] at sAiB
+    simp [<- add_sub_assoc] at sAiB
+    exact sAiB
+
+def Independent {α : Type*} (P : ProbSpace α) (A B : Set α) : Prop :=
+  P.p (A ∩ B) = P.p A * P.p B

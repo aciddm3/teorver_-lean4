@@ -19,7 +19,7 @@ theorem empty_mem {T : Type*} (F : SigmaAlgebra T)
   rw [Set.compl_univ] at h_compl
   exact h_compl
 
-theorem iintersect_mem {T : Type*} (F : SigmaAlgebra T) :
+theorem iIntersect_mem {T : Type*} (F : SigmaAlgebra T) :
   ∀ s : Nat → Set T, (∀ i, s i ∈ F.sets) → (⋂i, s i) ∈ F.sets := by
   intro s h_s
   have h_compl : ∀ i, (s i)ᶜ ∈ F.sets := by
@@ -33,7 +33,7 @@ theorem iintersect_mem {T : Type*} (F : SigmaAlgebra T) :
   simp at h_compl_union -- убирает двойное дополнение ((s i)ᶜ)ᶜ → s i
   exact h_compl_union
 
-theorem intersect2_mem {T : Type*} (F : SigmaAlgebra T) {A B : Set T}
+theorem inter2_mem {T : Type*} (F : SigmaAlgebra T) {A B : Set T}
   : (A ∈ F.sets) -> (B ∈ F.sets) -> (A ∩ B ∈ F.sets) := by
     intro hA hB
     let seq n := if n=0 then A else if n=1 then B else Set.univ
@@ -47,9 +47,29 @@ theorem intersect2_mem {T : Type*} (F : SigmaAlgebra T) {A B : Set T}
           exact hB
         . simp[seq]
           exact F.univ_mem
-      apply F.iintersect_mem seq hav1
+      apply F.iIntersect_mem seq hav1
     rw [<-Set.inter_iInter_nat_succ,
       <-Set.inter_iInter_nat_succ] at seq_mem
+    simp [seq] at seq_mem
+    exact seq_mem
+
+theorem union2_mem {T : Type*} (F : SigmaAlgebra T) {A B : Set T}
+  : (A ∈ F.sets) -> (B ∈ F.sets) -> (A ∪ B ∈ F.sets) := by
+    intro hA hB
+    let seq n := if n=0 then A else if n=1 then B else ∅
+    have seq_mem : (⋃i, seq i) ∈ F.sets := by
+      have hav1 : ∀ i, seq i ∈ F.sets := by
+        intro n
+        rcases n with _|_|_
+        . simp[seq]
+          exact hA
+        . simp[seq]
+          exact hB
+        . simp[seq]
+          exact F.empty_mem
+      apply F.iUnion_mem seq hav1
+    rw [<-Set.union_iUnion_nat_succ,
+      <-Set.union_iUnion_nat_succ] at seq_mem
     simp [seq] at seq_mem
     exact seq_mem
 
